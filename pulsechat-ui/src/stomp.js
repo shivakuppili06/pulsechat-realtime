@@ -1,7 +1,7 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
-const WS_URL = '/ws';
+const WS_URL = import.meta.env.VITE_WS_URL || '/ws';
 
 /**
  * Creates and activates a STOMP client that authenticates via JWT query param.
