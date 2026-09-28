@@ -32,6 +32,7 @@ public class RedisChatListener {
             }
 
             // Otherwise, broadcast to local WebSocket sessions
+            System.out.println("Received from Redis: " + payload.getMessage().getContent() + " from instance " + payload.getOriginInstanceId());
             messagingTemplate.convertAndSend("/topic/room." + payload.getMessage().getRoomId(), payload.getMessage());
         } catch (Exception e) {
             e.printStackTrace();

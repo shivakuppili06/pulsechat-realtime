@@ -5,6 +5,7 @@ import com.chat.app.config.RabbitMQConfig;
 import com.chat.app.config.RedisConfig;
 import com.chat.app.model.Message;
 import com.chat.app.model.RedisMessagePayload;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
@@ -21,13 +22,16 @@ public class RabbitMQChatListener {
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final InstanceConfig instanceConfig;
+    private final ObjectMapper objectMapper;
 
     public RabbitMQChatListener(SimpMessagingTemplate messagingTemplate,
                                 RedisTemplate<String, Object> redisTemplate,
-                                InstanceConfig instanceConfig) {
+                                InstanceConfig instanceConfig,
+                                ObjectMapper objectMapper) {
         this.messagingTemplate = messagingTemplate;
         this.redisTemplate = redisTemplate;
         this.instanceConfig = instanceConfig;
+        this.objectMapper = objectMapper;
     }
 
     @RabbitListener(queues = RabbitMQConfig.CHAT_QUEUE, ackMode = "MANUAL")
@@ -41,7 +45,9 @@ public class RabbitMQChatListener {
             
             // 2. Publish to Redis for horizontal scaling
             RedisMessagePayload payload = new RedisMessagePayload(instanceConfig.getInstanceId(), chatMessage);
-            redisTemplate.convertAndSend(RedisConfig.CHAT_TOPIC, payload);
+            System.out.println("Publishing to Redis: " + chatMessage.getContent());
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            redisTemplate.convertAndSend(RedisConfig.CHAT_TOPIC, jsonPayload);
 
             // Acknowledge the message upon successful broadcast
             channel.basicAck(tag, false);
