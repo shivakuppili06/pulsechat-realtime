@@ -4,12 +4,14 @@ A local-only demo of a scalable real-time chat application architecture using Sp
 
 ## Footprint
 Compared to a standard 1GB instance running larger loads (like DocAI), this microservice architecture utilizes roughly:
-- chat-app: 166.5MiB
-- chat-rabbitmq: 113.3MiB
-- chat-redis: 6.05MiB
-- chat-mongo: 76.42MiB
+- chat-app: ~260MiB
+- chat-rabbitmq: ~203MiB
+- chat-redis: ~6MiB
+- chat-mongo: ~187MiB
 
-Total memory footprint: ~362MiB
+Total memory footprint: ~656MiB. 
+
+Because the shared 1GB instance already runs DocAI at about the same footprint, PulseChat is operated as a local-only demo.
 
 ## Architecture
 The system uses a two-hop path for broadcasting messages across instances:
