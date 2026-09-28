@@ -76,4 +76,22 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists());
     }
+
+    @Test
+    void loginWrongPassword() throws Exception {
+        AuthRequest req = new AuthRequest("testuser", "wrongpass");
+        User mockUser = User.builder()
+                .id("mock-id")
+                .username("testuser")
+                .passwordHash(passwordEncoder.encode("testpass"))
+                .build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(mockUser));
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized());
+    }
 }

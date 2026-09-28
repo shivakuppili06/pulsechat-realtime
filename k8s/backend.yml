@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-app
+  template:
+    metadata:
+      labels:
+        app: chat-app
+    spec:
+      containers:
+      - name: chat-app
+        image: pulsechat-backend:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8081
+        envFrom:
+        - configMapRef:
+            name: pulsechat-config
+        - secretRef:
+            name: pulsechat-secret
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-app
+spec:
+  type: NodePort
+  selector:
+    app: chat-app
+  ports:
+  - port: 8081
+    targetPort: 8081
+    nodePort: 30081

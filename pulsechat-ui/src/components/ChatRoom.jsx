@@ -128,11 +128,29 @@ export default function ChatRoom({ token, username, roomId, onLeave }) {
   }
 
   // ── Mark messages as read when they scroll into view ─────────────────────
-  function handleMessageVisible(msgId, senderId) {
-    if (senderId !== username) {
-      stompRef.current?.sendRead(msgId);
+  const observerRef = useRef(null);
+  
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const msgId = entry.target.dataset.id;
+          const senderId = entry.target.dataset.sender;
+          if (msgId && senderId && senderId !== username) {
+            stompRef.current?.sendRead(msgId);
+            observerRef.current.unobserve(entry.target);
+          }
+        }
+      });
+    }, { threshold: 0.5 });
+    return () => observerRef.current?.disconnect();
+  }, [username]);
+
+  const messageRef = useCallback((node) => {
+    if (node !== null && observerRef.current) {
+      observerRef.current.observe(node);
     }
-  }
+  }, []);
 
   return (
     <div className="chat-root">
@@ -198,12 +216,10 @@ export default function ChatRoom({ token, username, roomId, onLeave }) {
             return (
               <div
                 key={msg.id}
+                ref={isMine ? null : messageRef}
+                data-id={msg.id}
+                data-sender={msg.senderUsername}
                 className={`message-row ${isMine ? 'mine' : 'theirs'}`}
-                onMouseEnter={() => {
-                  if (msg._confirmed && msg.id) {
-                    handleMessageVisible(msg.id, msg.senderUsername);
-                  }
-                }}
               >
                 <div className={`bubble ${isOptimistic ? 'optimistic' : ''}`}>
                   {!isMine && (

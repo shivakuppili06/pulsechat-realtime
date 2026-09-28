@@ -6,23 +6,7 @@ PulseChat is a real-time messaging application that demonstrates a robust, scala
 
 PulseChat's architecture is designed for horizontal scalability, durability, and secure identity management.
 
-```mermaid
-graph TD
-    Client[Browser Client]
-    AppInstance[Spring Boot App]
-    MongoDB[(MongoDB)]
-    RabbitMQ[[RabbitMQ]]
-    Redis[(Redis Pub/Sub & Store)]
-
-    Client -- "WebSocket (STOMP)" --> AppInstance
-    Client -- "REST (Auth)" --> AppInstance
-    AppInstance -- "Read/Write History" --> MongoDB
-    AppInstance -- "1. Publish to Exchange" --> RabbitMQ
-    RabbitMQ -- "2. Fanout to queues" --> AppInstance
-    AppInstance -- "3. Local delivery" --> Client
-    AppInstance -- "Presence/Typing/Receipts" --> Redis
-    Redis -- "Pub/Sub Broadcast" --> AppInstance
-```
+![PulseChat Architecture](./architecture.png)
 
 ### Two-Hop Delivery Path (RabbitMQ + Redis)
 The messaging delivery path uses a **two-hop** design:
@@ -49,13 +33,42 @@ A core security property of this system is that **all sender, typing, and read-r
 ### Pending / Not Implemented
 - TLS / HTTPS
 - Rate limiting
+- Circuit breaker
+- RabbitMQ Dead Letter Queue (DLQ) and retry limits for failed messages (currently, exceptions trigger infinite requeueing)
 - Advanced load testing
 - File attachments
+- Frontend load balancer
+
+## DevOps Additions
+- **CI/CD Pipeline**: GitHub Actions workflow (`.github/workflows/ci.yml`) automatically builds the backend and frontend, runs tests, and publishes Docker images to GitHub Container Registry (`ghcr.io`) upon pushing to the `main` branch.
+- **Runbook**: Created `RUNBOOK.md` detailing local deployment, service health checks, logs viewing, disaster recovery (for RabbitMQ/Redis/Mongo), and a basic rollback procedure.
+- **Load Testing**: Added a basic `k6` WebSocket load testing script (`loadtest/ws-test.js`) to simulate concurrent STOMP connections and message broadcasts.
+
+### Running the Load Test
+Ensure the backend is running (`docker-compose up -d`), then execute the k6 script:
+```bash
+k6 run loadtest/ws-test.js
+```
+The script will spin up 10 Virtual Users (VUs) for 30 seconds, connecting to the STOMP endpoint, subscribing to a room, and sending messages. Check the output for `status is 101` success rate and connection duration.
 
 ## Deployment
 
-**Decision: Local-only Demo**
-For the purposes of this project, PulseChat is kept as a local-only deployment. Deploying a full stack (MongoDB, RabbitMQ, Redis, Spring Boot, React) alongside our existing DocAI services on a single AWS `t3.micro` instance would likely exceed the 1GB RAM limit. To maintain stability, we run this locally via Docker Compose.
+**Local-Only Demo (Resource Constrained)**
+For the purposes of this project, PulseChat is kept as a local-only deployment. The measured stack footprint (Spring Boot, MongoDB, RabbitMQ, Redis) is over 1GB, making it impossible to host alongside existing DocAI services on our target 1GB AWS `t3.micro` instance (it will instantly crash with an Out-of-Memory error). Minimum hosting size requires a 2GB-4GB instance. To maintain stability, run this locally via Docker Compose.
+
+**Kubernetes (Minikube/Kind)**
+To deploy locally to a Kubernetes cluster (like Minikube):
+1. Build local images:
+   ```bash
+   docker build -t pulsechat-backend:latest ./pulsechat-backend
+   docker build -t pulsechat-ui:latest ./pulsechat-ui
+   # If using minikube, load images into the cluster: minikube image load pulsechat-backend:latest pulsechat-ui:latest
+   ```
+2. Apply manifests:
+   ```bash
+   kubectl apply -f k8s/
+   ```
+3. Access UI via NodePort `30080` and API via NodePort `30081`.
 
 ## Setup Instructions
 

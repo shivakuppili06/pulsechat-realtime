@@ -46,6 +46,7 @@ public class RabbitMQChatListener {
             // Acknowledge the message upon successful broadcast
             channel.basicAck(tag, false);
         } catch (Exception e) {
+            e.printStackTrace();
             // Negative acknowledgment, requeue the message
             channel.basicNack(tag, false, true);
         }

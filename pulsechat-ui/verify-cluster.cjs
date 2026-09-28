@@ -65,7 +65,7 @@ async function verifyCluster() {
         
         let clientBReceived = null;
         const messagePromise1 = new Promise((resolve) => {
-            clientB.subscribe('/topic/room/cluster', (message) => {
+            clientB.subscribe('/topic/room.cluster', (message) => {
                 const body = JSON.parse(message.body);
                 if (body.content === 'Hello from Node 1 to Node 2!') {
                     console.log("-> Client B received message from A: ", body.content);
@@ -76,7 +76,7 @@ async function verifyCluster() {
 
         let clientAReceived = null;
         const messagePromise2 = new Promise((resolve) => {
-            clientA.subscribe('/topic/room/cluster', (message) => {
+            clientA.subscribe('/topic/room.cluster', (message) => {
                 const body = JSON.parse(message.body);
                 if (body.content === 'Hello from Node 2 to Node 1!') {
                     console.log("-> Client A received message from B: ", body.content);

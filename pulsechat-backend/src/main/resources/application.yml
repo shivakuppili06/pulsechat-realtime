@@ -23,3 +23,15 @@ app:
   jwt:
     secret: ${JWT_SECRET:change-this-to-a-long-random-secret-in-production-min-256-bits}
     expiration-ms: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}

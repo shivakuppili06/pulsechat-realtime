@@ -2,6 +2,7 @@ package com.chat.app.controller;
 
 import com.chat.app.dto.AuthRequest;
 import com.chat.app.dto.AuthResponse;
+import com.chat.app.dto.RegisterRequest;
 import com.chat.app.model.User;
 import com.chat.app.repository.UserRepository;
 import com.chat.app.security.JwtUtil;
@@ -28,7 +29,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
@@ -47,12 +48,12 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         Optional<User> optionalUser = userRepository.findByUsername(request.getUsername());
         if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            throw new org.springframework.security.authentication.BadCredentialsException("Invalid username or password");
         }
 
         User user = optionalUser.get();
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            throw new org.springframework.security.authentication.BadCredentialsException("Invalid username or password");
         }
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getId());
