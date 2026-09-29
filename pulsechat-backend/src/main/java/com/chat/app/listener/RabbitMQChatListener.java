@@ -35,17 +35,15 @@ public class RabbitMQChatListener {
     }
 
     @RabbitListener(queues = RabbitMQConfig.CHAT_QUEUE, ackMode = "MANUAL")
-    public void receiveMessage(Message chatMessage, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) throws IOException {
+    public void receiveMessage(Message chatMessage, Channel channel, 
+                               @Header(AmqpHeaders.DELIVERY_TAG) long tag,
+                               @Header(name = AmqpHeaders.REDELIVERED, required = false) Boolean redelivered) throws IOException {
         try {
-            // Uncomment below line to test failure and requeue
-            // if (true) throw new RuntimeException("Test exception for requeue");
-
             // 1. Broadcast locally
             messagingTemplate.convertAndSend("/topic/room." + chatMessage.getRoomId(), chatMessage);
             
             // 2. Publish to Redis for horizontal scaling
             RedisMessagePayload payload = new RedisMessagePayload(instanceConfig.getInstanceId(), chatMessage);
-            System.out.println("Publishing to Redis: " + chatMessage.getContent());
             String jsonPayload = objectMapper.writeValueAsString(payload);
             redisTemplate.convertAndSend(RedisConfig.CHAT_TOPIC, jsonPayload);
 
@@ -53,8 +51,15 @@ public class RabbitMQChatListener {
             channel.basicAck(tag, false);
         } catch (Exception e) {
             e.printStackTrace();
-            // Negative acknowledgment, requeue the message
-            channel.basicNack(tag, false, true);
+            if (Boolean.TRUE.equals(redelivered)) {
+                System.err.println("Message failed processing repeatedly, routing to DLQ.");
+                // Negative acknowledgment without requeue sends to DLQ
+                channel.basicNack(tag, false, false);
+            } else {
+                System.err.println("Message failed processing, requeuing for retry.");
+                // Negative acknowledgment, requeue the message
+                channel.basicNack(tag, false, true);
+            }
         }
     }
 }

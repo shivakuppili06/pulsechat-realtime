@@ -19,6 +19,9 @@ public class Message {
     @Size(max = 2000, message = "Message content cannot exceed 2000 characters")
     private String content;
     
+    private String attachmentUrl;
+    private String attachmentType;
+    
     private boolean delivered = false;
     private Instant timestamp = Instant.now();
     private java.util.List<String> readBy = new java.util.ArrayList<>();
@@ -47,6 +50,10 @@ public class Message {
     public void setSenderUsername(String senderUsername) { this.senderUsername = senderUsername; }
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+    public String getAttachmentUrl() { return attachmentUrl; }
+    public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
+    public String getAttachmentType() { return attachmentType; }
+    public void setAttachmentType(String attachmentType) { this.attachmentType = attachmentType; }
     public boolean isDelivered() { return delivered; }
     public void setDelivered(boolean delivered) { this.delivered = delivered; }
     public Instant getTimestamp() { return timestamp; }
@@ -60,6 +67,8 @@ public class Message {
         private String senderId;
         private String senderUsername;
         private String content;
+        private String attachmentUrl;
+        private String attachmentType;
         private boolean delivered = false;
         private Instant timestamp = Instant.now();
         public MessageBuilder id(String id) { this.id = id; return this; }
@@ -67,10 +76,14 @@ public class Message {
         public MessageBuilder senderId(String senderId) { this.senderId = senderId; return this; }
         public MessageBuilder senderUsername(String senderUsername) { this.senderUsername = senderUsername; return this; }
         public MessageBuilder content(String content) { this.content = content; return this; }
+        public MessageBuilder attachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; return this; }
+        public MessageBuilder attachmentType(String attachmentType) { this.attachmentType = attachmentType; return this; }
         public MessageBuilder delivered(boolean delivered) { this.delivered = delivered; return this; }
         public MessageBuilder timestamp(Instant timestamp) { this.timestamp = timestamp; return this; }
         public Message build() { 
             Message msg = new Message(id, roomId, senderId, senderUsername, content, delivered, timestamp); 
+            msg.setAttachmentUrl(attachmentUrl);
+            msg.setAttachmentType(attachmentType);
             msg.setReadBy(new java.util.ArrayList<>());
             return msg;
         }

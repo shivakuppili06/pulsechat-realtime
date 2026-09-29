@@ -1,10 +1,8 @@
 package com.chat.app.listener;
 
 import org.springframework.context.event.EventListener;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.time.Duration;
@@ -23,15 +21,9 @@ public class WebSocketEventListener {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         
         java.util.Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
-        if (sessionAttributes != null) {
-            System.out.println("Session connected, attrs: " + sessionAttributes);
-        } else {
-            System.out.println("Session connected, attrs are null");
-        }
         if (sessionAttributes != null && sessionAttributes.containsKey("userId")) {
             String userId = (String) sessionAttributes.get("userId");
             String redisKey = "presence:" + userId;
-            System.out.println("Setting presence for " + userId);
             // Set TTL to 30 seconds
             redisTemplate.opsForValue().set(redisKey, "online", Duration.ofSeconds(30));
         }

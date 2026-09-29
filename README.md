@@ -96,7 +96,18 @@ Building this exposed several classic distributed systems and React pitfalls, wh
 *   **Redis Deserialization Crash**: Fixed `java.time.Instant` deserialization failures in Spring Data Redis by swapping to `StringRedisSerializer` and a properly configured `ObjectMapper`.
 *   **Presence Overwrites**: Fixed real-time room rosters dropping users by utilizing `ConcurrentHashMap`.
 
+## ✅ Implemented Backend Improvements
+*   **Dead Letter Queue (DLQ)**: Poison messages are correctly routed to `chat.dlq` after a failed retry, preventing infinite requeuing loops. Admin endpoint `/api/admin/dlq/drain` added for inspection.
+*   **Redis Caching for Message History**: Read-through cache implemented using Redis capped lists. Serves the latest N messages per room from memory, reducing MongoDB load on reconnects.
+*   **Rate Limiting**: Basic per-user rate limiting added to the STOMP endpoint using Redis increment and TTL to prevent message flooding/spam.
+*   **File & Media Management**: End-to-end file upload support via AWS S3. Messages now support `attachmentUrl` and `attachmentType` fields.
+*   **Pagination**: Message history is now paginated, with page and size parameters. Redis caches only the most recent page.
+
+## ✅ Implemented Frontend Improvements
+*   **TypeScript Migration**: Converted the entire React codebase to strict TypeScript.
+*   **Tailwind CSS & shadcn/ui**: Migrated the design system to Tailwind CSS (v3) and integrated shadcn/ui components (Button, Input, Avatar, Dialog, Scroll Area) for a robust foundation.
+*   **Zustand State Management**: Replaced heavy local state drilling with a centralized `useChatStore` Zustand store for predictable UI updates.
+*   **Automated Testing**: Configured `vitest` and `@testing-library/react` and wrote basic component tests.
+
 ## ⚠️ Known Limitations
-*   **No Dead Letter Queue (DLQ)**: Poison messages will infinitely requeue in RabbitMQ.
 *   **No Load Balancer**: Client connections currently hit instance ports directly instead of routing through a reverse proxy (e.g., Nginx).
-*   **No Pagination**: Message history loads the entire room at once.

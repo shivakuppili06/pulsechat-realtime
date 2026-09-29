@@ -60,3 +60,5 @@ Thumbs.db
 coverage/
 .nyc_output/
 .eslintcache
+__pycache__/
+scratch/
