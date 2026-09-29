@@ -14,7 +14,10 @@ export async function register(username, password) {
     headers: headers(),
     body: JSON.stringify({ username, password }),
   });
-  if (!res.ok) throw new Error(await res.text() || 'Registration failed');
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Registration failed');
+  }
   return res.json();
 }
 
